@@ -624,6 +624,12 @@
                 <button class="btn btn-primary" id="addDocBtn">
                     <i class="fas fa-plus"></i> เพิ่มเอกสาร
                 </button>
+                <button class="btn" onclick="exportData()" style="background: linear-gradient(45deg, #9C27B0, #673AB7); color: white; margin-left: 10px;">
+                    <i class="fas fa-download"></i> ส่งออกข้อมูล
+                </button>
+                <button class="btn" onclick="clearAllData()" style="background: linear-gradient(45deg, #FF5722, #D84315); color: white; margin-left: 10px;">
+                    <i class="fas fa-trash-alt"></i> ลบข้อมูลทั้งหมด
+                </button>
             </div>
 
             <h3 style="color: white; margin-bottom: 20px;"><i class="fas fa-chart-line"></i> ภาพรวมความคืบหน้า</h3>
@@ -639,7 +645,17 @@
         <!-- Table Page -->
         <div id="table" class="page">
             <div class="table-container">
-                <h3 style="margin-bottom: 20px; color: #333;"><i class="fas fa-list"></i> ตารางรายการเอกสารทั้งหมด</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: #333; margin: 0;"><i class="fas fa-list"></i> ตารางรายการเอกสารทั้งหมด</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="exportData()" style="background: linear-gradient(45deg, #9C27B0, #673AB7); color: white;">
+                            <i class="fas fa-download"></i> ส่งออก
+                        </button>
+                        <button class="btn" onclick="clearAllData()" style="background: linear-gradient(45deg, #FF5722, #D84315); color: white;">
+                            <i class="fas fa-trash-alt"></i> ลบทั้งหมด
+                        </button>
+                    </div>
+                </div>
                 <table class="data-table" id="dataTable">
                     <thead>
                         <tr>
@@ -744,6 +760,79 @@
         let nextId = 1;
         let editingDocId = null;
 
+        // Local Storage functions
+        function saveToStorage() {
+            try {
+                localStorage.setItem('pharmacyDocs', JSON.stringify(documents));
+                localStorage.setItem('nextDocId', nextId.toString());
+                console.log('Data saved to localStorage');
+            } catch (error) {
+                console.log('localStorage not available, using memory storage');
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const savedDocs = localStorage.getItem('pharmacyDocs');
+                const savedNextId = localStorage.getItem('nextDocId');
+                
+                if (savedDocs) {
+                    documents = JSON.parse(savedDocs);
+                    console.log('Loaded documents from localStorage:', documents.length);
+                }
+                
+                if (savedNextId) {
+                    nextId = parseInt(savedNextId);
+                    console.log('Loaded nextId from localStorage:', nextId);
+                }
+                
+                return documents.length > 0;
+            } catch (error) {
+                console.log('Error loading from localStorage:', error);
+                return false;
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ คุณต้องการลบข้อมูลทั้งหมดหรือไม่?\n\nการกระทำนี้ไม่สามารถย้อนกลับได้!')) {
+                try {
+                    localStorage.removeItem('pharmacyDocs');
+                    localStorage.removeItem('nextDocId');
+                    documents = [];
+                    nextId = 1;
+                    renderDashboard();
+                    renderTable();
+                    alert('✅ ลบข้อมูลทั้งหมดเรียบร้อยแล้ว!');
+                } catch (error) {
+                    console.log('Error clearing localStorage:', error);
+                }
+            }
+        }
+
+        function exportData() {
+            try {
+                const dataToExport = {
+                    documents: documents,
+                    nextId: nextId,
+                    exportDate: new Date().toLocaleString('th-TH'),
+                    version: '1.0'
+                };
+                
+                const dataStr = JSON.stringify(dataToExport, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `pharmacy-backup-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                alert('✅ ส่งออกข้อมูลเรียบร้อยแล้ว!');
+            } catch (error) {
+                alert('❌ เกิดข้อผิดพลาดในการส่งออกข้อมูล');
+                console.error('Export error:', error);
+            }
+        }
+
         // Main functions
         function addDocument() {
             console.log('addDocument called');
@@ -774,6 +863,9 @@
             documents.push(newDoc);
             console.log('Document added:', newDoc);
             
+            // Save to localStorage
+            saveToStorage();
+
             // Clear form
             document.getElementById('docName').value = '';
             document.getElementById('docQuantity').value = '';
@@ -813,6 +905,7 @@
         function deleteDocument(docId) {
             if (confirm('คุณต้องการลบเอกสารนี้หรือไม่?')) {
                 documents = documents.filter(doc => doc.id !== docId);
+                saveToStorage(); // Save after delete
                 renderDashboard();
                 renderTable();
                 alert('ลบเอกสารเรียบร้อยแล้ว!');
@@ -860,6 +953,7 @@
             documents[docIndex].currentStep = parseInt(document.getElementById('editDocStatus').value);
             documents[docIndex].lastUpdated = new Date().toLocaleDateString('th-TH');
 
+            saveToStorage(); // Save after edit
             renderDashboard();
             renderTable();
             closeModal();
@@ -1010,53 +1104,64 @@
             document.getElementById('avgProgress').textContent = avgProgress + '%';
         }
 
-        // Initialize with sample data
+        // Initialize with sample data only if no data exists
         function initializeWithSampleData() {
-            const sampleDocs = [
-                {
-                    id: nextId++,
-                    name: 'ยาพาราเซตามอล 500mg',
-                    type: 'ยา',
-                    quantity: '100 เม็ด',
-                    department: 'แผนกผู้ป่วยใน',
-                    note: 'สำหรับผู้ป่วยไข้หวัด',
-                    currentStep: 2,
-                    createdDate: new Date(Date.now() - 3*24*60*60*1000).toLocaleDateString('th-TH'),
-                    lastUpdated: new Date().toLocaleDateString('th-TH')
-                },
-                {
-                    id: nextId++,
-                    name: 'เครื่องวัดความดันโลหิต',
-                    type: 'อุปกรณ์การแพทย์',
-                    quantity: '2 เครื่อง',
-                    department: 'แผนกผู้ป่วยนอก',
-                    note: 'เครื่องเก่าเสียหาย ต้องเปลี่ยนใหม่',
-                    currentStep: 0,
-                    createdDate: new Date().toLocaleDateString('th-TH'),
-                    lastUpdated: new Date().toLocaleDateString('th-TH')
-                },
-                {
-                    id: nextId++,
-                    name: 'วิตามินบี รวม',
-                    type: 'ยา',
-                    quantity: '50 ขวด',
-                    department: 'แผนกเวชกรรมป้องกัน',
-                    note: 'สำหรับโครงการส่งเสริมสุขภาพ',
-                    currentStep: 4,
-                    createdDate: new Date(Date.now() - 7*24*60*60*1000).toLocaleDateString('th-TH'),
-                    lastUpdated: new Date(Date.now() - 1*24*60*60*1000).toLocaleDateString('th-TH')
-                }
-            ];
-            
-            documents = sampleDocs;
+            if (documents.length === 0) {
+                const sampleDocs = [
+                    {
+                        id: nextId++,
+                        name: 'ยาพาราเซตามอล 500mg',
+                        type: 'ยา',
+                        quantity: '100 เม็ด',
+                        department: 'แผนกผู้ป่วยใน',
+                        note: 'สำหรับผู้ป่วยไข้หวัด',
+                        currentStep: 2,
+                        createdDate: new Date(Date.now() - 3*24*60*60*1000).toLocaleDateString('th-TH'),
+                        lastUpdated: new Date().toLocaleDateString('th-TH')
+                    },
+                    {
+                        id: nextId++,
+                        name: 'เครื่องวัดความดันโลหิต',
+                        type: 'อุปกรณ์การแพทย์',
+                        quantity: '2 เครื่อง',
+                        department: 'แผนกผู้ป่วยนอก',
+                        note: 'เครื่องเก่าเสียหาย ต้องเปลี่ยนใหม่',
+                        currentStep: 0,
+                        createdDate: new Date().toLocaleDateString('th-TH'),
+                        lastUpdated: new Date().toLocaleDateString('th-TH')
+                    },
+                    {
+                        id: nextId++,
+                        name: 'วิตามินบี รวม',
+                        type: 'ยา',
+                        quantity: '50 ขวด',
+                        department: 'แผนกเวชกรรมป้องกัน',
+                        note: 'สำหรับโครงการส่งเสริมสุขภาพ',
+                        currentStep: 4,
+                        createdDate: new Date(Date.now() - 7*24*60*60*1000).toLocaleDateString('th-TH'),
+                        lastUpdated: new Date(Date.now() - 1*24*60*60*1000).toLocaleDateString('th-TH')
+                    }
+                ];
+                
+                documents = sampleDocs;
+                saveToStorage(); // Save sample data
+                console.log('Sample data initialized and saved');
+            }
         }
 
         // Event listeners and initialization
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, setting up event listeners...');
             
-            // Initialize sample data
-            initializeWithSampleData();
+            // Try to load existing data first
+            const hasExistingData = loadFromStorage();
+            
+            // Initialize sample data only if no existing data
+            if (!hasExistingData) {
+                initializeWithSampleData();
+            }
+            
+            // Render dashboard with loaded/sample data
             renderDashboard();
             
             // Add document button
@@ -1121,6 +1226,8 @@
         window.showPage = showPage;
         window.openEditModal = openEditModal;
         window.deleteDocument = deleteDocument;
+        window.clearAllData = clearAllData;
+        window.exportData = exportData;
         
     </script>
 </body>
