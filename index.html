@@ -131,28 +131,51 @@
         // Google Sheets configuration (hardcoded for production)
         const sheetsApiUrl = 'https://script.google.com/macros/s/AKfycbzPP-OC0YZrcCiYvKUI0R7H8xl8nmOy70GWnej3osG2IeJlojl_TUVjHiW-g_QSeyCF/exec';
 
-        // Login system
-        function login(username, password) {
-            // Simple authentication - in production, this should be more secure
-            if (username === 'admin' && password === 'pm4600') {
-                isLoggedIn = true;
-                currentUser = username;
+        // Secure login system with hashed passwords
+        const VALID_USERS = {
+            // Username: SHA-256 hash of password
+            'admin': '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824', // "hello"
+            // To generate new hash: console.log(await hashPassword('your_password'))
+        };
+
+        // Hash password function using Web Crypto API
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Secure login function
+        async function login(username, password) {
+            try {
+                const hashedPassword = await hashPassword(password);
                 
-                // Save login state
-                storage.setItem('isLoggedIn', 'true');
-                storage.setItem('currentUser', username);
-                
-                // Show app, hide login
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('appSection').classList.add('active');
-                document.getElementById('currentUser').textContent = username;
-                
-                // Load data after login
-                loadDataFromSheets();
-                
-                return true;
-            } else {
-                alert('❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง\n\nกรุณาตรวจสอบ:\n• ชื่อผู้ใช้: admin\n• รหัสผ่าน: pm4600');
+                if (VALID_USERS[username] && VALID_USERS[username] === hashedPassword) {
+                    isLoggedIn = true;
+                    currentUser = username;
+                    
+                    // Save login state
+                    storage.setItem('isLoggedIn', 'true');
+                    storage.setItem('currentUser', username);
+                    
+                    // Show app, hide login
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('appSection').classList.add('active');
+                    document.getElementById('currentUser').textContent = username;
+                    
+                    // Load data after login
+                    loadDataFromSheets();
+                    
+                    return true;
+                } else {
+                    alert('❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('❌ เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
                 return false;
             }
         }
