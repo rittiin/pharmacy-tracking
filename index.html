@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบ Track เอกสารการเงิน - เภสัช</title>
+    <title>ระบบบันทึกและติดตามเอกสารการเงิน - เภสัช</title>
     <style>
         * {
             margin: 0;
@@ -260,7 +260,7 @@
             margin-bottom: 20px;
         }
 
-       .expanded-stats {
+        .expanded-stats {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
@@ -291,6 +291,43 @@
         .stat-label {
             font-size: 1rem;
             opacity: 0.9;
+        }
+
+        /* Type Distribution Cards */
+        .type-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .type-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .type-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .type-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .type-amount {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            background: rgba(255,255,255,0.1);
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-top: 8px;
         }
 
         /* Dashboard Cards */
@@ -366,42 +403,6 @@
             text-align: center;
             font-weight: 600;
             color: #333;
-        }
-
-        /* Type Distribution Cards */
-        .type-card {
-           background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: transform 0.3s ease;
-
-        .type-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .type-number {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .type-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-bottom: 5px;
-        }
-
-        .type-amount {
-            font-size: 0.8rem;
-            opacity: 0.8;
-            background: rgba(255,255,255,0.1);
-            padding: 6px 10px;
-            border-radius: 8px;
-            margin-top: 8px;
         }
 
         /* Search Section */
@@ -897,7 +898,7 @@
         <div class="login-card">
             <div class="login-logo">🏥</div>
             <h2 class="login-title">เข้าสู่ระบบ</h2>
-            <p class="login-subtitle">ระบบ Track เอกสารการเงิน - เภสัชกรรม</p>
+            <p class="login-subtitle">ระบบเอกสารการเงิน - เภสัชกรรม</p>
             
             <form class="login-form" id="loginForm">
                 <div class="input-group">
@@ -922,7 +923,7 @@
         <div class="container">
             <div class="header">
                 <div class="header-left">
-                    <h1>📊 ระบบ Track เอกสารการเงิน</h1>
+                    <h1>🖥️ ระบบเอกสารการเงิน</h1>
                     <p>เภสัชกรรม - ติดตามสถานะการเงินแบบ Real-time</p>
                 </div>
                 <div class="header-right">
@@ -949,7 +950,7 @@
                 <!-- Top Section: Stats + Status Chart -->
                 <div class="dashboard-top">
                     <div class="stats-section">
-                        <h3 style="color: white; margin-bottom: 20px;">📊 สถิติข้อมูล</h3>
+                        <h3 style="color: white; margin-bottom: 20px;">📊 สถิติข้อมูลเอกสาร</h3>
                         <div class="stats">
                             <div class="stat-card">
                                 <div class="stat-number" id="totalDocs">0</div>
@@ -968,10 +969,33 @@
                                 <div class="stat-label">ความคืบหน้าเฉลี่ย</div>
                             </div>
                         </div>
+                        <h3 style="color: white; margin-bottom: 20px;">🖥️ สถิติข้อมูลแยกประเภท</h3>
+                        <div class="expanded-stats">
+                            <div class="type-card">
+                                <div class="type-number" id="typeYa">0</div>
+                                <div class="type-label">ยา</div>
+                                <div class="type-amount" id="typeYaAmount">0 บาท</div>
+                            </div>
+                            <div class="type-card">
+                                <div class="type-number" id="typeMedical">0</div>
+                                <div class="type-label">วัสดุการแพทย์</div>
+                                <div class="type-amount" id="typeMedicalAmount">0 บาท</div>
+                            </div>
+                            <div class="type-card">
+                                <div class="type-number" id="typePharm">0</div>
+                                <div class="type-label">วัสดุเภสัช</div>
+                                <div class="type-amount" id="typePharmAmount">0 บาท</div>
+                            </div>
+                            <div class="type-card">
+                                <div class="type-number" id="typeOther">0</div>
+                                <div class="type-label">อื่นๆ</div>
+                                <div class="type-amount" id="typeOtherAmount">0 บาท</div>
+                            </div>
+                        </div>
                         <div class="stat-card" style="margin-top: 20px;">
                             <div class="stat-number" id="totalAmount">0</div>
                             <div class="stat-label">ยอดเงินรวม (บาท)</div>
-                        </div>                      
+                        </div>
                     </div>
 
                     <!-- Status Chart Section -->
@@ -982,53 +1006,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="stats-section">
-                    <h3 style="color: white; margin-bottom: 20px;">📊 สถิติข้อมูลและประเภท</h3>
-                    <div class="stats">
-                        <div class="stat-card">
-                            <div class="stat-number" id="totalDocs">0</div>
-                            <div class="stat-label">เอกสารทั้งหมด</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="completedDocs">0</div>
-                            <div class="stat-label">เสร็จสิ้น</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="pendingDocs">0</div>
-                            <div class="stat-label">กำลังดำเนินการ</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="avgProgress">0%</div>
-                            <div class="stat-label">ความคืบหน้าเฉลี่ย</div>
-                        </div>
-                    </div>
-                    <div class="expanded-stats">
-                        <div class="type-card">
-                            <div class="type-number" id="typeYa">0</div>
-                            <div class="type-label">ยา</div>
-                            <div class="type-amount" id="typeYaAmount">0 บาท</div>
-                        </div>
-                        <div class="type-card">
-                            <div class="type-number" id="typeMedical">0</div>
-                            <div class="type-label">วัสดุการแพทย์</div>
-                            <div class="type-amount" id="typeMedicalAmount">0 บาท</div>
-                        </div>
-                        <div class="type-card">
-                            <div class="type-number" id="typePharm">0</div>
-                            <div class="type-label">วัสดุเภสัช</div>
-                            <div class="type-amount" id="typePharmAmount">0 บาท</div>
-                        </div>
-                        <div class="type-card">
-                            <div class="type-number" id="typeOther">0</div>
-                            <div class="type-label">อื่นๆ</div>
-                            <div class="type-amount" id="typeOtherAmount">0 บาท</div>
-                        </div>
-                    </div>
-                    <div class="stat-card" style="margin-top: 20px;">
-                        <div class="stat-number" id="totalAmount">0</div>
-                        <div class="stat-label">ยอดเงินรวม (บาท)</div>
-                    </div>
-                </div>
+
                 <!-- Add Document + Search Section -->
                 <div class="add-search-container">
                     <div class="add-document">
@@ -1342,7 +1320,7 @@
         // Secure login system with hashed passwords
         const VALID_USERS = {
             // Username: SHA-256 hash of password
-            'admin': '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824', 
+            'admin': '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824',
             // To generate new hash: console.log(await hashPassword('your_password'))
         };
 
@@ -1626,13 +1604,11 @@
                     console.log('📊 โหลดข้อมูล', documents.length, 'รายการ');
                 } else {
                     console.log('⚠️ ไม่พบข้อมูลใน Google Sheets');
-                    // ไม่โหลดข้อมูลตัวอย่าง
                     renderDashboard();
                     renderTable();
                 }
             } catch (error) {
                 console.error('❌ เกิดข้อผิดพลาดในการโหลดข้อมูล:', error);
-                // ไม่โหลดข้อมูลตัวอย่าง
                 renderDashboard();
                 renderTable();
             }
